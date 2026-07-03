@@ -30,6 +30,13 @@ export class Scheduler {
   private readonly pollers: Poller[] = [];
   private readonly timers = new Set<NodeJS.Timeout>();
 
+  /**
+   * PHASE-4: called after every poller run (success or failure) — the SSE
+   * layer derives change events from it. Runs outside the poller's try/catch
+   * so a hook error is never recorded as a source failure.
+   */
+  onRunComplete?: (source: string, ok: boolean) => void;
+
   constructor(private readonly db: Database.Database) {}
 
   register(poller: Poller): void {
@@ -61,11 +68,13 @@ export class Scheduler {
   }
 
   private async runOnce(poller: Poller): Promise<void> {
+    let ok = true;
     try {
       await poller.run();
       recordSourceSuccess(this.db, poller.name);
       this.schedule(poller, poller.cadence);
     } catch (err) {
+      ok = false;
       const message = err instanceof Error ? err.message : String(err);
       const failures = recordSourceFailure(this.db, poller.name, message);
       const backoff = Math.min(poller.cadence * 2 ** failures, MAX_BACKOFF_MS);
@@ -74,5 +83,6 @@ export class Scheduler {
       );
       this.schedule(poller, backoff);
     }
+    this.onRunComplete?.(poller.name, ok);
   }
 }

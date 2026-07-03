@@ -1,5 +1,7 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { registerApiRoutes } from './api/routes';
+import { SseHub } from './api/sse';
 import { DB_PATH, getSourceStatuses, openDb, resetDb } from './db/db';
 import { createArenaPoller } from './pollers/arena';
 import { createHeartbeatPoller } from './pollers/heartbeat';
@@ -26,18 +28,27 @@ const app = new Hono();
 
 app.get('/api/health', (c) => c.json({ ok: true, ts: new Date().toISOString() }));
 app.get('/api/status', (c) => c.json(getSourceStatuses(db)));
-// PHASE-4: full REST read API (/api/models, /api/overview, /api/search, ...) and SSE /api/stream.
 
 const resolver = new EntityResolver(db);
 const scheduler = new Scheduler(db);
-scheduler.register(createHeartbeatPoller(db));
-scheduler.register(createOpenRouterPoller(db, resolver));
-scheduler.register(createArenaPoller(db, resolver));
-scheduler.register(createHubPoller(db, resolver));
-scheduler.register(createHnPoller(db));
-scheduler.register(createArxivPoller(db));
-for (const feed of LAB_FEEDS) scheduler.register(createRssPoller(db, feed));
+const pollers = [
+  createHeartbeatPoller(db),
+  createOpenRouterPoller(db, resolver),
+  createArenaPoller(db, resolver),
+  createHubPoller(db, resolver),
+  createHnPoller(db),
+  createArxivPoller(db),
+  ...LAB_FEEDS.map((feed) => createRssPoller(db, feed)),
+];
+for (const poller of pollers) scheduler.register(poller);
 // PHASE-3 backlog: GitHub stars poller (§4, lowest priority — not built).
+
+// PHASE-4: read API + SSE. Staleness derives from each poller's cadence.
+registerApiRoutes(app, db, new Map(pollers.map((p) => [p.name, p.cadence])));
+const sse = new SseHub(db);
+sse.register(app);
+scheduler.onRunComplete = (source, ok) => sse.handleRunComplete(source, ok);
+
 scheduler.start();
 
 const port = Number(process.env.PORT ?? 3001);

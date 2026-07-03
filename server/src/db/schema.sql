@@ -40,6 +40,10 @@ CREATE TABLE IF NOT EXISTS arena_snapshot (
   PRIMARY KEY (model_id, category, ts)
 );
 CREATE INDEX IF NOT EXISTS idx_arena_snapshot_ts ON arena_snapshot(ts);
+-- PHASE-4 addition: leaderboard/series queries are category-first ("latest
+-- text board", "frontier gap per date") and the PK (model_id, category, ts)
+-- can't serve them; at 18k+ rows those were full scans per request.
+CREATE INDEX IF NOT EXISTS idx_arena_snapshot_category_ts ON arena_snapshot(category, ts);
 
 -- From HF Hub, hourly (open models only).
 CREATE TABLE IF NOT EXISTS hub_snapshot (
