@@ -1,0 +1,11 @@
+{
+  "anthropic/claude-fable-5": "FABLE5",
+  "anthropic/claude-sonnet-5": "SONNET5",
+  "anthropic/claude-opus-4.8": "OPUS48",
+  "openai/gpt-5.5": "GPT55",
+  "openai/gpt-5.5-pro": "GPT55PRO",
+  "google/gemini-2.5-flash-image": "NANOBANANA",
+  "deepseek/deepseek-r1": "DSR1",
+  "moonshotai/kimi-k2": "KIMIK2",
+  "meta-llama/llama-4-maverick": "MAVERICK"
+}

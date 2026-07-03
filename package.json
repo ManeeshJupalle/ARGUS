@@ -1,0 +1,24 @@
+{
+  "name": "argus",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ARGUS — a Bloomberg-style terminal for the AI model ecosystem",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
+    "reset": "npm run reset -w server",
+    "seed": "npm run seed -w server",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
