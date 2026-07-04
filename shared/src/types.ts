@@ -96,6 +96,8 @@ export interface SourceStatus {
   last_success: string | null;
   last_error: string | null;
   consecutive_failures: number;
+  /** PHASE-5: computed server-side by the envelope stale rule (3x cadence). */
+  stale?: boolean;
 }
 
 /* ------------------------------------------------------------------------ *

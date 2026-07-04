@@ -1,0 +1,22 @@
+/* ARGUS design tokens — ARGUS_ARCHITECTURE.md §8, verbatim.
+   Every color in the app resolves to one of these variables; no hex
+   anywhere else. This is Bloomberg's visual language, not generic dark. */
+
+:root {
+  --bg:           #000000;   /* true black, not near-black */
+  --panel-border: #333338;   /* hairline panel chrome */
+  --amber:        #FF9F0A;   /* primary data text — Bloomberg amber, headers/values */
+  --white:        #E8E8E8;   /* secondary text */
+  --label:        #7A7A85;   /* dim uppercase field labels */
+  --up:           #00C853;   /* green ticks */
+  --down:         #FF3B30;   /* red ticks */
+  --func:         #4FA8FF;   /* blue = interactive/clickable function codes */
+  --accent-bar:   #FF9F0A;   /* active panel indicator */
+  --flash:        rgba(255, 159, 10, .25);  /* cell change flash, 400ms fade */
+
+  /* Non-color primitives (density is the aesthetic). */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
+  --fs-data: 12px;   /* body data text (11-13px band) */
+  --fs-small: 11px;  /* labels, meta */
+  --fs-header: 13px; /* panel titles, header strip values */
+}

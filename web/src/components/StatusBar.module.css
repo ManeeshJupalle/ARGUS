@@ -1,0 +1,62 @@
+.bar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  border-top: 1px solid var(--panel-border);
+  padding: 0 8px;
+  gap: 14px;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.brand {
+  color: var(--amber);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.sources {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.source {
+  color: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dot {
+  margin-right: 3px;
+}
+
+.ok {
+  color: var(--up);
+}
+
+.stale {
+  color: var(--amber);
+}
+
+.fail {
+  color: var(--down);
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.sse {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clock {
+  color: var(--white);
+  letter-spacing: 0.05em;
+}

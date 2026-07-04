@@ -155,6 +155,18 @@ export function registerApiRoutes(
   const staleness = new StaleTracker(db, cadences);
   const now = (): string => new Date().toISOString();
 
+  /* ---- GET /api/status — Phase-1 endpoint, enriched in PHASE-5 with the
+     computed per-source `stale` flag so the status-bar dots use the exact
+     same rule as the response envelopes (the client can't know cadences). */
+
+  app.get('/api/status', (c) => {
+    const rows = getSourceStatuses(db).map((s) => ({
+      ...s,
+      stale: staleness.any([s.source]),
+    }));
+    return c.json(rows);
+  });
+
   /* ---- GET /api/models — the market table ---- */
 
   // Whitelisted sort → (SQL expression, natural direction). `dir` overrides.
@@ -646,7 +658,7 @@ function buildOverview(db: Database.Database, staleness: StaleTracker): Overview
         Math.abs(b.rank_delta_7d) - Math.abs(a.rank_delta_7d) ||
         Math.abs(b.elo_delta_7d) - Math.abs(a.elo_delta_7d),
     )
-    .slice(0, 5);
+    .slice(0, 8);
 
   /* download spikes: change across the trailing 7d window (needs ≥24h of
    * hub history to appear — hourly snapshots accrue it within a day) */
@@ -669,7 +681,7 @@ function buildOverview(db: Database.Database, staleness: StaleTracker): Overview
   const newest = db
     .prepare(
       `SELECT id, ticker, name, openness, released_at FROM model
-       WHERE released_at IS NOT NULL ORDER BY released_at DESC LIMIT 5`,
+       WHERE released_at IS NOT NULL ORDER BY released_at DESC LIMIT 8`,
     )
     .all() as Overview['newest'];
 

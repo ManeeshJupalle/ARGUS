@@ -1,0 +1,61 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th {
+  text-align: left;
+  color: var(--label);
+  font-size: var(--fs-small);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.table td {
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: var(--fs-data);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fn {
+  color: var(--func);
+  font-weight: 700;
+}
+
+.usage {
+  color: var(--amber);
+}
+
+.desc {
+  color: var(--white);
+}
+
+.phase {
+  color: var(--label);
+  text-align: right;
+}
+
+.live {
+  color: var(--up);
+  text-align: right;
+}
+
+.keys {
+  padding: 8px 10px;
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.keys b {
+  color: var(--amber);
+  font-weight: 400;
+}

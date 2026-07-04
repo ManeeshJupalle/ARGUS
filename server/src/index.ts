@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { registerApiRoutes } from './api/routes';
 import { SseHub } from './api/sse';
-import { DB_PATH, getSourceStatuses, openDb, resetDb } from './db/db';
+import { DB_PATH, openDb, resetDb } from './db/db';
 import { createArenaPoller } from './pollers/arena';
 import { createHeartbeatPoller } from './pollers/heartbeat';
 import { createHubPoller } from './pollers/hub';
@@ -27,7 +27,7 @@ if (process.argv.includes('--reset')) {
 const app = new Hono();
 
 app.get('/api/health', (c) => c.json({ ok: true, ts: new Date().toISOString() }));
-app.get('/api/status', (c) => c.json(getSourceStatuses(db)));
+// /api/status is registered by registerApiRoutes (enriched with `stale`).
 
 const resolver = new EntityResolver(db);
 const scheduler = new Scheduler(db);

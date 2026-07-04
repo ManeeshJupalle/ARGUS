@@ -1,0 +1,97 @@
+.bar {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--bg);
+}
+
+.accent {
+  width: 3px;
+  align-self: stretch;
+  background: var(--accent-bar);
+}
+
+.prompt {
+  color: var(--amber);
+  font-weight: 700;
+  padding: 0 8px;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-header);
+  user-select: none;
+}
+
+.inputwrap {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--amber);
+  caret-color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: var(--fs-header);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Ghost overlay: an invisible mirror of the typed value positions the dim
+   completion exactly after the caret — monospace makes this pixel-exact. */
+.ghostline {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  white-space: pre;
+  font-size: var(--fs-header);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.mirror {
+  visibility: hidden;
+}
+
+.ghost {
+  color: var(--label);
+}
+
+.go {
+  color: var(--up);
+  border: 1px solid var(--up);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  padding: 1px 6px;
+  margin: 0 8px;
+  letter-spacing: 0.1em;
+  user-select: none;
+}
+
+.error {
+  color: var(--down);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+
+.hint {
+  color: var(--label);
+  font-size: var(--fs-small);
+  padding: 0 10px;
+  user-select: none;
+  white-space: nowrap;
+}

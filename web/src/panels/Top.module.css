@@ -1,0 +1,236 @@
+.root {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ---- header stat strip ---- */
+
+.strip {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.statlabel {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.statvalue {
+  color: var(--amber);
+  font-size: var(--fs-header);
+  font-weight: 700;
+}
+
+.statsub {
+  color: var(--white);
+  font-size: var(--fs-data);
+}
+
+/* ---- three-column body ---- */
+
+.cols {
+  display: grid;
+  grid-template-columns: 11fr 14fr;
+  min-height: 0;
+  height: 100%;
+}
+
+.col {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.col:last-child {
+  border-right: none;
+}
+
+.section {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.sectiontitle {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 5px 10px 3px;
+}
+
+.note {
+  color: var(--label);
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+  padding: 6px 10px 10px;
+}
+
+/* ---- data tables (fixed layout: zero shift while streaming) ---- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table td,
+.table th {
+  padding: 2px 8px;
+  font-size: var(--fs-data);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Numeric cells never truncate — clip the NAME columns instead. */
+.table td.num {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.table th {
+  color: var(--label);
+  font-size: var(--fs-small);
+  font-weight: 400;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.num {
+  text-align: right;
+}
+
+.ticker {
+  color: var(--func);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticker:hover {
+  text-decoration: underline;
+}
+
+.name {
+  color: var(--white);
+}
+
+.white {
+  color: var(--white);
+}
+
+.dim {
+  color: var(--label);
+}
+
+.amber {
+  color: var(--amber);
+}
+
+.up {
+  color: var(--up);
+}
+
+.down {
+  color: var(--down);
+}
+
+/* ---- news feed ---- */
+
+.news {
+  display: flex;
+  flex-direction: column;
+}
+
+.newsitem {
+  display: grid;
+  grid-template-columns: 5ch 4ch 1fr 7ch;
+  gap: 8px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  align-items: baseline;
+}
+
+.newstime {
+  color: var(--label);
+  font-size: var(--fs-small);
+}
+
+.newssrc {
+  color: var(--amber);
+  font-size: var(--fs-small);
+  letter-spacing: 0.04em;
+}
+
+.newsbody {
+  min-width: 0;
+}
+
+.headline {
+  color: var(--white);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headline:hover {
+  text-decoration: underline;
+  color: var(--white);
+}
+
+.newscodes {
+  display: inline;
+}
+
+.newscode {
+  color: var(--func);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.newscode:hover {
+  text-decoration: underline;
+}
+
+.salience {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-align: right;
+}
+
+/* News slide-in (required by the Phase-5 spec for SSE arrivals). */
+.slidein {
+  animation: news-slide 120ms ease-out;
+}
+
+@keyframes news-slide {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

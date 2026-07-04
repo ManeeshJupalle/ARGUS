@@ -1,0 +1,45 @@
+.shell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.panelarea {
+  min-height: 0;
+  padding: 4px;
+  display: grid; /* single full panel this phase; LAYOUT presets are PHASE-6 */
+}
+
+/* ---- min-width gate ---- */
+
+.gate {
+  display: none;
+}
+
+@media (max-width: 1099px) {
+  .shell {
+    display: none;
+  }
+  .gate {
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--bg);
+  }
+  .gatebrand {
+    color: var(--amber);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+  }
+  .gatemsg {
+    color: var(--label);
+    font-size: var(--fs-data);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+}

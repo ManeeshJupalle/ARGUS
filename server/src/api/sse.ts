@@ -68,7 +68,12 @@ export class SseHub {
         });
         try {
           while (open) {
+            // Comment per §6, plus a real `ping` event: comments are invisible
+            // to the EventSource API, and some proxies (observed: Vite dev)
+            // hold client connections open after upstream death — clients need
+            // an observable beat to detect a dead pipe and reconnect.
             await stream.write(`: keepalive\n\n`);
+            await stream.writeSSE({ event: 'ping', data: '' });
             await stream.sleep(KEEPALIVE_MS);
           }
         } finally {

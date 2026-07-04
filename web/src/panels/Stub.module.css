@@ -1,0 +1,32 @@
+.stub {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.fn {
+  color: var(--amber);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.msg {
+  color: var(--label);
+  font-size: var(--fs-data);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.usage {
+  color: var(--func);
+  font-size: var(--fs-data);
+}
+
+.context {
+  color: var(--white);
+  font-size: var(--fs-small);
+}
