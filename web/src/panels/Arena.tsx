@@ -49,8 +49,8 @@ export function Arena({ dispatch }: { dispatch: Dispatch }) {
 
 function ArenaBoard({ category }: { category: string }) {
   const state = useEnvelope(
+    `board:${category}`,
     () => api.leaderboard(category),
-    [category],
     (e) => e.type === 'snapshot' && e.fields.includes('arena'),
   );
   const { env } = state;
@@ -154,8 +154,8 @@ function ArenaHistory({ dispatch, id, category }: { dispatch: Dispatch; id: stri
   const code = entity?.ticker ?? id.toUpperCase();
 
   const state = useEnvelope(
+    `arena:${id}:${category}`,
     () => api.arenaSeries(id, category),
-    [id, category],
     (e) => e.type === 'snapshot' && e.fields.includes('arena') && e.model_ids.includes(id),
   );
   const { env } = state;
@@ -220,7 +220,7 @@ function ArenaHistory({ dispatch, id, category }: { dispatch: Dispatch; id: stri
                 ACCRUES DAILY (TEXT HAS THE 2-YEAR BACKFILL)
               </div>
             ) : (
-              <TerminalChart series={series} />
+              <TerminalChart series={series} fitKey={`${id}:${category}`} />
             )
           }
         </PanelData>

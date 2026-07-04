@@ -21,8 +21,8 @@ export function Px({ dispatch }: { dispatch: Dispatch }) {
   const code = entity?.ticker ?? id.toUpperCase();
 
   const state = useEnvelope(
+    `prices:${id}:${range}`,
     () => api.prices(id, range),
-    [id, range],
     (e) => e.type === 'snapshot' && e.fields.includes('price') && e.model_ids.includes(id),
   );
   const { env } = state;
@@ -94,7 +94,7 @@ export function Px({ dispatch }: { dispatch: Dispatch }) {
             pts.length < 2 ? (
               <div className={common.note}>ONLY {pts.length} TICK YET — HISTORY ACCRUES EVERY 15 MINUTES</div>
             ) : (
-              <TerminalChart series={series} />
+              <TerminalChart series={series} fitKey={`${id}:${range}`} />
             )
           }
         </PanelData>

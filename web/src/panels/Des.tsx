@@ -14,8 +14,8 @@ export function Des({ dispatch }: { dispatch: Dispatch }) {
   const id = entity?.id ?? '';
 
   const state = useEnvelope(
+    `des:${id}`,
     () => api.detail(id),
-    [id],
     (e) => (e.type === 'snapshot' || e.type === 'news') && e.model_ids.includes(id),
   );
   const { env } = state;

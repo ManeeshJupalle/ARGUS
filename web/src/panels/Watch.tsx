@@ -13,7 +13,7 @@ import common from './common.module.css';
 export function Watch({ dispatch: _d }: { dispatch: Dispatch }) {
   const watchVersion = useArgusStore((s) => s.watchVersion);
 
-  const state = useEnvelope(() => api.watchlist(), [watchVersion], (e) => e.type === 'snapshot');
+  const state = useEnvelope(`watchlist:${watchVersion}`, () => api.watchlist(), (e) => e.type === 'snapshot');
   const { env } = state;
   const quotes = env?.data ?? [];
 

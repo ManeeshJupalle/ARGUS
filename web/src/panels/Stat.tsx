@@ -22,7 +22,7 @@ function fmtLast(ts: string | null): string {
 
 /** STAT — plumbing on display: source health, poll cadences, row counts. */
 export function Stat({ dispatch: _d }: { dispatch: Dispatch }) {
-  const state = useEnvelope(() => api.stat(), [], (e) => e.type === 'status');
+  const state = useEnvelope('stat', () => api.stat(), (e) => e.type === 'status');
   const { env } = state;
 
   return (

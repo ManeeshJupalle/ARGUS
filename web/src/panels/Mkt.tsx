@@ -37,8 +37,22 @@ export function Mkt({ dispatch }: { dispatch: Dispatch }) {
   const [sort, setSort] = useState<Sort>({ key: 'elo', dir: -1 });
   const [scrollTop, setScrollTop] = useState(0);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const scrollPending = useRef(false);
+  const latestScrollTop = useRef(0);
 
-  const state = useEnvelope(() => api.models(filter), [filter], (e) => e.type === 'snapshot');
+  /* rAF-throttled: scroll events fire faster than frames render; the frame
+     callback reads the LATEST position so fast flicks land exactly. */
+  const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    latestScrollTop.current = e.currentTarget.scrollTop;
+    if (scrollPending.current) return;
+    scrollPending.current = true;
+    requestAnimationFrame(() => {
+      scrollPending.current = false;
+      setScrollTop(latestScrollTop.current);
+    });
+  };
+
+  const state = useEnvelope(`models:${filter ?? 'all'}`, () => api.models(filter), (e) => e.type === 'snapshot');
   const { env } = state;
 
   const rows = useMemo(() => {
@@ -113,7 +127,7 @@ export function Mkt({ dispatch }: { dispatch: Dispatch }) {
         </div>
         <PanelData state={state} isEmpty={(data) => data.length === 0} emptyText="NO MODELS MATCH">
           {() => (
-            <div ref={bodyRef} className={styles.body} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
+            <div ref={bodyRef} className={styles.body} onScroll={onScroll}>
               <div style={{ height: start * ROW_H }} />
               {visible.map((m) => (
                 <MktRow key={m.id} m={m} />

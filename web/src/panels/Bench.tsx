@@ -25,8 +25,8 @@ export function Bench({ dispatch }: { dispatch: Dispatch }) {
   const ids = dispatch.entities.map((e) => e.id);
 
   const state = useEnvelope(
+    `bench:${ids.join(',')}`,
     () => api.compare(ids),
-    [ids.join(',')],
     (e) => e.type === 'snapshot' && e.model_ids.some((id) => ids.includes(id)),
   );
   const { env } = state;

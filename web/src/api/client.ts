@@ -37,6 +37,10 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 const get = <T>(path: string): Promise<Envelope<T>> => req<Envelope<T>>(path);
 
+const SEARCH_CACHE_TTL_MS = 30_000;
+const searchCache = new Map<string, { at: number; results: SearchResult[] }>();
+const searchInflight = new Map<string, Promise<SearchResult[]>>();
+
 export const api = {
   overview: () => get<Overview>('/api/overview'),
   news: (limit: number, model?: string) =>
@@ -49,11 +53,30 @@ export const api = {
   leaderboard: (category: string) =>
     get<Leaderboard>(`/api/arena/leaderboard?category=${encodeURIComponent(category)}`),
   compare: (ids: string[]) => get<BenchCompare>(`/api/bench/compare?ids=${ids.join(',')}`),
-  search: async (q: string): Promise<SearchResult[]> => {
-    const res = await get<SearchResult[]>(`/api/search?q=${encodeURIComponent(q)}`);
-    return res.data;
-  },
   stat: () => get<StatPayload>('/api/stat'),
+  /**
+   * Entity search with a short-lived cache + in-flight dedupe: ghost-text
+   * autocomplete and Enter-time resolution hit the same prefix back to back,
+   * so the second call must not pay a network round trip.
+   */
+  search: async (q: string): Promise<SearchResult[]> => {
+    const key = q.trim().toLowerCase();
+    const hit = searchCache.get(key);
+    if (hit && Date.now() - hit.at < SEARCH_CACHE_TTL_MS) return hit.results;
+    let p = searchInflight.get(key);
+    if (!p) {
+      p = get<SearchResult[]>(`/api/search?q=${encodeURIComponent(q)}`).then((res) => res.data);
+      searchInflight.set(key, p);
+      void p.finally(() => searchInflight.delete(key));
+    }
+    const results = await p;
+    searchCache.set(key, { at: Date.now(), results });
+    if (searchCache.size > 200) {
+      const oldest = searchCache.keys().next().value;
+      if (oldest !== undefined) searchCache.delete(oldest);
+    }
+    return results;
+  },
   watchlist: () => get<WatchQuote[]>('/api/watchlist'),
   watchAdd: (model_id: string) =>
     req<{ ok: boolean }>('/api/watchlist', {

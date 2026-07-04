@@ -89,8 +89,14 @@ export function CommandLine() {
 
   const run = async () => {
     const input = value;
+    if (tokenize(input).length === 0) return;
+    // Immediate ‹GO› acknowledgment on Enter — resolution is usually cached
+    // and sub-millisecond, but the chip must never wait on the network.
+    setGo(true);
+    setError(null);
     const result = await executeCommand(input, api.search);
     if ('code' in result) {
+      setGo(false);
       if (result.code === 'EMPTY') return;
       setError(result);
       return;
@@ -98,6 +104,7 @@ export function CommandLine() {
     try {
       await execute(result); // WATCH ADD/RM hit the write API and can fail
     } catch (err) {
+      setGo(false);
       setError({
         code: 'BAD_ARGS',
         message: `${result.spec.fn} FAILED — ${err instanceof Error ? err.message : String(err)}`,
@@ -108,7 +115,6 @@ export function CommandLine() {
     setValue('');
     setGhost(null);
     setError(null);
-    setGo(true);
     window.setTimeout(() => setGo(false), GO_FLASH_MS);
   };
 

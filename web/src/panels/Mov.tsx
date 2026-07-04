@@ -9,7 +9,7 @@ import common from './common.module.css';
 
 /** MOV — movers detail: price cuts, arena rank jumps, download spikes. */
 export function Mov({ dispatch: _d }: { dispatch: Dispatch }) {
-  const state = useEnvelope(() => api.overview(), [], (e) => e.type === 'snapshot');
+  const state = useEnvelope('overview', () => api.overview(), (e) => e.type === 'snapshot');
   const { env } = state;
 
   const code = (id: string, ticker: string | null): string =>

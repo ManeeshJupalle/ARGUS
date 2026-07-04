@@ -18,6 +18,7 @@ export function News({ dispatch }: { dispatch: Dispatch }) {
   const fresh = useRef<Set<string>>(new Set());
 
   const state = useEnvelope(
+    `news:${entity?.id ?? 'all'}`,
     async () => {
       const res = await api.news(LIMIT, entity?.id);
       const incoming = new Set(res.data.map((n) => n.id));
@@ -25,7 +26,6 @@ export function News({ dispatch }: { dispatch: Dispatch }) {
       known.current = incoming;
       return res;
     },
-    [entity?.id],
     (e) => e.type === 'news',
   );
 

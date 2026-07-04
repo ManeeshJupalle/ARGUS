@@ -15,9 +15,14 @@ const REFETCH_DEBOUNCE_MS = 400;
 const TREND_LOOKBACK_POINTS = 7;
 const NEWS_FEED_LIMIT = 40;
 
+/* Stale-while-revalidate across mounts: re-entering TOP (panel switches,
+   LAYOUT changes) renders the last known screen instantly. */
+let cachedOverview: Envelope<Overview> | null = null;
+let cachedNews: Envelope<NewsItem[]> | null = null;
+
 export function Top() {
-  const [envelope, setEnvelope] = useState<Envelope<Overview> | null>(null);
-  const [news, setNews] = useState<Envelope<NewsItem[]> | null>(null);
+  const [envelope, setEnvelope] = useState<Envelope<Overview> | null>(cachedOverview);
+  const [news, setNews] = useState<Envelope<NewsItem[]> | null>(cachedNews);
   const [error, setError] = useState<string | null>(null);
   const tickers = useTickerMap();
   const knownNewsIds = useRef<Set<string>>(new Set());
@@ -28,6 +33,7 @@ export function Top() {
     void api
       .overview()
       .then((env) => {
+        cachedOverview = env;
         setEnvelope(env);
         setError(null);
       })
@@ -43,6 +49,7 @@ export function Top() {
           [...incoming].filter((id) => knownNewsIds.current.size > 0 && !knownNewsIds.current.has(id)),
         );
         knownNewsIds.current = incoming;
+        cachedNews = env;
         setNews(env);
       })
       .catch(() => undefined);

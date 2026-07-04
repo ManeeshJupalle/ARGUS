@@ -13,8 +13,10 @@ import styles from './TerminalChart.module.css';
  * grid, amber/blue line series, crosshair readout in a legend strip. Colors
  * are read from the token CSS variables — no hex here.
  *
- * Callers must keep `series` referentially stable (useMemo) — the chart is
- * rebuilt when it changes.
+ * The chart instance is created ONCE per mount; data refreshes call
+ * setData() in place, so SSE refetches never flicker the canvas or reset the
+ * user's zoom. The view refits only when `fitKey` changes (new entity/range).
+ * The series COUNT and per-series config must be stable across renders.
  */
 
 export interface ChartSeries {
@@ -33,10 +35,14 @@ function tokenColor(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-export function TerminalChart({ series }: { series: ChartSeries[] }) {
+export function TerminalChart({ series, fitKey }: { series: ChartSeries[]; fitKey: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const linesRef = useRef<ISeriesApi<'Line'>[]>([]);
+  const lastFitKey = useRef<string | null>(null);
   const [readout, setReadout] = useState<{ ts: string; values: (number | null)[] } | null>(null);
 
+  /* Create once per mount. */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -68,8 +74,9 @@ export function TerminalChart({ series }: { series: ChartSeries[] }) {
       handleScroll: true,
       handleScale: true,
     });
+    chartRef.current = chart;
 
-    const lines: ISeriesApi<'Line'>[] = series.map((s) => {
+    linesRef.current = series.map((s) => {
       const line = chart.addLineSeries({
         color: tokenColor(s.colorVar),
         lineWidth: 1,
@@ -77,22 +84,23 @@ export function TerminalChart({ series }: { series: ChartSeries[] }) {
         priceLineVisible: false,
         lastValueVisible: true,
       });
-      line.setData(s.points);
       if (s.invert) line.priceScale().applyOptions({ invertScale: true });
       return line;
     });
-    chart.timeScale().fitContent();
 
     chart.subscribeCrosshairMove((param) => {
       if (!param.time || param.point === undefined) {
         setReadout(null);
         return;
       }
-      const values = lines.map((line) => {
+      const values = linesRef.current.map((line) => {
         const datum = param.seriesData.get(line) as { value?: number } | undefined;
         return datum?.value ?? null;
       });
-      const ts = typeof param.time === 'string' ? param.time : new Date((param.time as number) * 1000).toISOString().slice(0, 10);
+      const ts =
+        typeof param.time === 'string'
+          ? param.time
+          : new Date((param.time as number) * 1000).toISOString().slice(0, 10);
       setReadout({ ts, values });
     });
 
@@ -105,8 +113,23 @@ export function TerminalChart({ series }: { series: ChartSeries[] }) {
     return () => {
       resize.disconnect();
       chart.remove();
+      chartRef.current = null;
+      linesRef.current = [];
+      lastFitKey.current = null;
     };
-  }, [series]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* Data refresh: update in place; refit only for a new entity/range. */
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    series.forEach((s, i) => linesRef.current[i]?.setData(s.points));
+    if (lastFitKey.current !== fitKey) {
+      lastFitKey.current = fitKey;
+      chart.timeScale().fitContent();
+    }
+  }, [series, fitKey]);
 
   return (
     <div className={styles.root}>
