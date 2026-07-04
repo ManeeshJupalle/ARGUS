@@ -102,6 +102,14 @@ export function parseTokens(tokens: string[]): Parsed | CommandError {
     }
   }
 
+  // Required args must all have been consumed (a required enum with no token
+  // at all would otherwise slip through the loop's early break).
+  for (const arg of spec.args) {
+    if (arg.required && !(arg.name in args)) {
+      return badArgs(spec, `EXPECTED ${arg.name.toUpperCase()} (${arg.values?.join('|')})`);
+    }
+  }
+
   const leftover = rest.slice(cursor);
   if (leftover.length > 0) {
     // Unconsumed tokens are the inline entity ("NEWS FABLE5", "DES claude opus")
@@ -184,6 +192,19 @@ export async function executeCommand(
       };
     }
     entities.push(pick.result);
+  }
+
+  // Entity lists (BENCH) must resolve to distinct models — "BENCH FABLE5
+  // fable-5" collapses to one column, which is not a comparison.
+  if (parsed.spec.entity === 'list') {
+    const unique = [...new Map(entities.map((e) => [e.id, e])).values()];
+    if (unique.length < 2) {
+      return {
+        code: 'BAD_ARGS',
+        message: `BAD ARGS — ENTITIES RESOLVE TO ${unique.length} DISTINCT MODEL · USAGE: ${parsed.spec.usage}`,
+      };
+    }
+    return { spec: parsed.spec, entities: unique, args: parsed.args };
   }
 
   return { spec: parsed.spec, entities, args: parsed.args };

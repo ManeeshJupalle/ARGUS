@@ -305,6 +305,22 @@ export interface Overview {
   frontier: Frontier;
 }
 
+/** GET /api/watchlist — PHASE-6 live quote board row. */
+export interface WatchQuote {
+  id: string;
+  ticker: string | null;
+  name: string;
+  openness: Openness;
+  added_at: string;
+  prompt_usd_per_mtok: number | null;
+  price_delta_pct_24h: number | null;
+  price_delta_pct_7d: number | null;
+  /** Latest text-category standing. */
+  elo: number | null;
+  arena_rank: number | null;
+  elo_delta_7d: number | null;
+}
+
 /* ------------------------------------------------------------------------ *
  * PHASE-4: SSE events (GET /api/stream). Emitted after each poll cycle with
  * just-changed ids; clients refetch the endpoints they care about.

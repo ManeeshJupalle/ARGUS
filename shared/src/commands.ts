@@ -156,10 +156,10 @@ export const COMMANDS: readonly CommandSpec[] = [
   },
   {
     fn: 'LAYOUT',
-    description: 'PANEL GRID PRESETS',
-    usage: 'LAYOUT [1|2|4]',
+    description: 'PANEL GRID PRESETS · ALT+1-4 FOCUSES A PANEL',
+    usage: 'LAYOUT <1|2|4>',
     entity: 'none',
-    args: [{ name: 'preset', kind: 'enum', required: false, values: ['1', '2', '4'] }],
+    args: [{ name: 'preset', kind: 'enum', required: true, values: ['1', '2', '4'] }],
     implementedInPhase: 6,
   },
 ] as const;

@@ -20,7 +20,19 @@ export function CommandLine() {
   const [ghost, setGhost] = useState<string | null>(null);
   const [error, setError] = useState<CommandError | null>(null);
   const [go, setGo] = useState(false);
-  const setDispatch = useArgusStore((s) => s.setDispatch);
+  const execute = useArgusStore((s) => s.execute);
+  const prefill = useArgusStore((s) => s.prefill);
+  const setPrefill = useArgusStore((s) => s.setPrefill);
+
+  /* Panels can push a partial command here (e.g. DES's BENCH code). */
+  useEffect(() => {
+    if (prefill === null) return;
+    setValue(prefill);
+    setError(null);
+    setGhost(null);
+    setPrefill(null);
+    inputRef.current?.focus();
+  }, [prefill, setPrefill]);
 
   /* Focus from anywhere: '/' or Ctrl+K. */
   useEffect(() => {
@@ -80,7 +92,15 @@ export function CommandLine() {
       setError(result);
       return;
     }
-    setDispatch(result);
+    try {
+      await execute(result); // WATCH ADD/RM hit the write API and can fail
+    } catch (err) {
+      setError({
+        code: 'BAD_ARGS',
+        message: `${result.spec.fn} FAILED — ${err instanceof Error ? err.message : String(err)}`,
+      });
+      return;
+    }
     historyRef.current.push(input);
     setValue('');
     setGhost(null);

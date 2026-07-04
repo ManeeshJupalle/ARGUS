@@ -24,6 +24,7 @@ import type {
   Overview,
   PricePoint,
   SearchResult,
+  WatchQuote,
 } from '@argus/shared';
 import { getSourceStatuses } from '../db/db';
 
@@ -373,25 +374,37 @@ export function registerApiRoutes(
     if (unknown.length > 0) return badRequest(c, `unknown model ids: ${unknown.join(', ')}`);
     const found = models as BenchCompareModel[];
 
-    // Synthetic headline rows first (arena ELO, price, context), then every
-    // benchmark any of the models has a score for. Missing cells are null —
-    // never fabricated.
+    // Synthetic headline rows first (arena ELOs per category, price, context),
+    // then every benchmark any of the models has a score for. Missing cells
+    // are null — never fabricated.
     const rows: BenchCompareRow[] = [];
     const numberPerModel = (fn: (id: string) => number | null): (number | null)[] =>
       found.map((m) => fn(m.id));
 
-    rows.push({
-      key: 'arena_elo_text',
-      source: 'lmarena',
-      values: numberPerModel((id) => {
-        const r = db
-          .prepare(
-            `SELECT elo, MAX(ts) FROM arena_snapshot WHERE model_id = ? AND category = 'text'`,
-          )
-          .get(id) as { elo: number | null } | undefined;
-        return r?.elo ?? null;
-      }),
-    });
+    // PHASE-6: one row per arena category any compared model appears in
+    // ('text' pinned first — it's the headline board).
+    const cats = (
+      db
+        .prepare(
+          `SELECT DISTINCT category FROM arena_snapshot
+           WHERE model_id IN (${ids.map(() => '?').join(',')}) ORDER BY category`,
+        )
+        .all(...ids) as { category: string }[]
+    )
+      .map((r) => r.category)
+      .sort((a, b) => (a === 'text' ? -1 : b === 'text' ? 1 : a.localeCompare(b)));
+    for (const cat of cats) {
+      rows.push({
+        key: `arena_elo_${cat}`,
+        source: 'lmarena',
+        values: numberPerModel((id) => {
+          const r = db
+            .prepare(`SELECT elo, MAX(ts) FROM arena_snapshot WHERE model_id = ? AND category = ?`)
+            .get(id, cat) as { elo: number | null } | undefined;
+          return r?.elo ?? null;
+        }),
+      });
+    }
     const latestPrice = (id: string): { prompt: number; completion: number } | null => {
       const r = db
         .prepare(
@@ -491,6 +504,81 @@ export function registerApiRoutes(
     const parsed = searchQuery.safeParse(c.req.query());
     if (!parsed.success) return badRequest(c, parsed.error);
     return ok(c, search(db, parsed.data.q), now(), false);
+  });
+
+  /* ---- watchlist (PHASE-6) ------------------------------------------------
+     THE ONLY WRITE ENDPOINTS IN THE APP. Single-user §7 WATCH persistence:
+       GET    /api/watchlist            → live quote board (computed, read-only)
+       POST   /api/watchlist            → body {model_id}; idempotent add
+       DELETE /api/watchlist/:org/:name → idempotent remove
+     Everything else in this module stays strictly read-only. */
+
+  app.get('/api/watchlist', (c) => {
+    const watched = db
+      .prepare(`SELECT model_id, added_at FROM watchlist ORDER BY added_at ASC`)
+      .all() as { model_id: string; added_at: string }[];
+
+    const board = buildLeaderboard(db, 'text');
+    const eloByModel = new Map(board.rows.map((r) => [r.id, r]));
+
+    const priceSeries = db
+      .prepare(
+        `SELECT model_id, ts, prompt_usd_per_mtok AS value FROM price_snapshot
+         WHERE model_id IN (SELECT model_id FROM watchlist) ORDER BY model_id, ts ASC`,
+      )
+      .all() as TsValue[];
+    const day = deltas(priceSeries, 24 * 3600_000, 30 * 86_400_000);
+    const week = deltas(priceSeries, 7 * 86_400_000, 30 * 86_400_000);
+    const pct = (cur: number, prev: number | null): number | null =>
+      prev === null || prev === 0 ? null : ((cur - prev) / prev) * 100;
+
+    const data: WatchQuote[] = watched.map((w) => {
+      const model = db
+        .prepare(`SELECT id, ticker, name, openness FROM model WHERE id = ?`)
+        .get(w.model_id) as Pick<Model, 'id' | 'ticker' | 'name' | 'openness'>;
+      const price = day.get(w.model_id);
+      const arena = eloByModel.get(w.model_id);
+      return {
+        ...model,
+        added_at: w.added_at,
+        prompt_usd_per_mtok: price?.current ?? null,
+        price_delta_pct_24h: price ? pct(price.current, price.prev) : null,
+        price_delta_pct_7d: (() => {
+          const wk = week.get(w.model_id);
+          return wk ? pct(wk.current, wk.prev) : null;
+        })(),
+        elo: arena?.elo ?? null,
+        arena_rank: arena?.rank ?? null,
+        elo_delta_7d: arena?.elo_delta_7d ?? null,
+      };
+    });
+    return ok(c, data, now(), staleness.any(['openrouter', 'lmarena']));
+  });
+
+  const watchAddBody = z.object({ model_id: z.string().min(1) });
+
+  app.post('/api/watchlist', async (c) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return badRequest(c, 'expected JSON body {model_id}');
+    }
+    const parsed = watchAddBody.safeParse(body);
+    if (!parsed.success) return badRequest(c, parsed.error);
+    const id = parsed.data.model_id.toLowerCase();
+    if (!modelExists(db, id)) return c.json({ error: `unknown model: ${id}` }, 404);
+    db.prepare(`INSERT OR IGNORE INTO watchlist (model_id, added_at) VALUES (?, ?)`).run(
+      id,
+      now(),
+    );
+    return c.json({ ok: true, model_id: id }, 201);
+  });
+
+  app.delete('/api/watchlist/:org/:name', (c) => {
+    const id = `${c.req.param('org')}/${c.req.param('name')}`.toLowerCase();
+    db.prepare(`DELETE FROM watchlist WHERE model_id = ?`).run(id);
+    return c.json({ ok: true, model_id: id });
   });
 }
 

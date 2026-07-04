@@ -194,6 +194,25 @@ describe('arg validation failures', () => {
     expect((await errorOf('LAYOUT 3')).code).toBe('BAD_ARGS');
   });
 
+  it('bare LAYOUT requires a preset (PHASE-6)', async () => {
+    const e = await errorOf('LAYOUT');
+    expect(e.code).toBe('BAD_ARGS');
+    expect(e.message).toContain('PRESET (1|2|4)');
+  });
+
+  it('LAYOUT 1 and LAYOUT 4 dispatch', async () => {
+    expect((await dispatchOf('LAYOUT 1')).args).toEqual({ preset: '1' });
+    expect((await dispatchOf('LAYOUT 4')).args).toEqual({ preset: '4' });
+  });
+
+  it('BENCH with five entities dispatches; duplicates collapse and fail', async () => {
+    const five = await dispatchOf('BENCH FABLE5 GPT55 GEMINI31PR QWEN32B QWEN34B');
+    expect(five.entities).toHaveLength(5);
+    const dup = await errorOf('BENCH FABLE5 FABLE5');
+    expect(dup.code).toBe('BAD_ARGS');
+    expect(dup.message).toContain('1 DISTINCT');
+  });
+
   it('TOP rejects a leading entity', async () => {
     const e = await errorOf('FABLE5 TOP');
     expect(e.message).toContain('TAKES NO ENTITY');

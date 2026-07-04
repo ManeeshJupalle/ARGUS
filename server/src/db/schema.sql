@@ -100,6 +100,12 @@ CREATE TABLE IF NOT EXISTS quarantine (
   UNIQUE (source, raw)
 );
 
+-- PHASE-6: single-user watchlist (§7 WATCH). The only user-writable table.
+CREATE TABLE IF NOT EXISTS watchlist (
+  model_id  TEXT PRIMARY KEY REFERENCES model(id),
+  added_at  TEXT NOT NULL
+);
+
 -- Per-source poller health (§6); surfaced at GET /api/status.
 CREATE TABLE IF NOT EXISTS source_status (
   source                TEXT PRIMARY KEY,

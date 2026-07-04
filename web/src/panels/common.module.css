@@ -1,0 +1,111 @@
+/* Shared panel vocabulary: state notes, dense tables, badges, blue codes. */
+
+.note {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 10px;
+}
+
+.error {
+  color: var(--down);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 10px;
+}
+
+.sectiontitle {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 5px 10px 3px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th {
+  color: var(--label);
+  font-size: var(--fs-small);
+  font-weight: 400;
+  text-transform: uppercase;
+  text-align: right;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--panel-border);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table td {
+  padding: 2px 8px;
+  font-size: var(--fs-data);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table td.num {
+  text-align: right;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ticker {
+  color: var(--func);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticker:hover {
+  text-decoration: underline;
+}
+
+.code {
+  color: var(--func);
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 14px;
+  letter-spacing: 0.06em;
+}
+
+.code:hover {
+  text-decoration: underline;
+}
+
+.amber {
+  color: var(--amber);
+}
+
+.white {
+  color: var(--white);
+}
+
+.dim {
+  color: var(--label);
+}
+
+.up {
+  color: var(--up);
+}
+
+.down {
+  color: var(--down);
+}
+
+.label {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

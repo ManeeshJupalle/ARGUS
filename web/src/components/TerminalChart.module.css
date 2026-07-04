@@ -1,0 +1,44 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.legend {
+  display: flex;
+  gap: 18px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.series {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.serieslabel {
+  color: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.seriesvalue {
+  font-size: var(--fs-data);
+  font-weight: 700;
+}
+
+.crosshairts {
+  margin-left: auto;
+  color: var(--label);
+}
+
+.chart {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}

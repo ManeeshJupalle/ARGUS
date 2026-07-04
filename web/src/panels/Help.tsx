@@ -2,7 +2,7 @@ import { COMMANDS } from '@argus/shared';
 import { Panel } from '../components/Panel';
 import styles from './Help.module.css';
 
-const CURRENT_PHASE = 5;
+const CURRENT_PHASE = 6;
 
 /** Registry-driven function reference. Phase 7 enriches with examples. */
 export function Help() {
@@ -10,7 +10,7 @@ export function Help() {
     <Panel fn="HELP" desc="Function reference">
       <div className={styles.keys}>
         <b>/</b> or <b>CTRL+K</b> focus command · <b>TAB</b> accept ghost · <b>↑/↓</b> history ·{' '}
-        <b>ESC</b> clear · <b>ENTER</b> = ‹GO›
+        <b>ESC</b> clear · <b>ENTER</b> = ‹GO› · <b>ALT+1-4</b> focus panel · commands fill the focused panel
       </div>
       <table className={styles.table}>
         <colgroup>

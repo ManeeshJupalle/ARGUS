@@ -8,7 +8,77 @@
 .panelarea {
   min-height: 0;
   padding: 4px;
-  display: grid; /* single full panel this phase; LAYOUT presets are PHASE-6 */
+  display: grid;
+  gap: 4px;
+}
+
+.grid1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.grid2 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+
+.grid4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* Panel slot: the accent-bar token cascades — focused slot turns it amber,
+   unfocused slots dim it (the §8 active-panel indicator). */
+.slot {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  --accent-bar: var(--label);
+}
+
+.slot.focused {
+  --accent-bar: var(--amber);
+}
+
+.slotnum {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  padding: 3px 6px;
+  font-size: var(--fs-small);
+  color: var(--label);
+  user-select: none;
+  pointer-events: none;
+  letter-spacing: 0.06em;
+}
+
+.focused .slotnum {
+  color: var(--amber);
+}
+
+.empty {
+  height: 100%;
+  border: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.emptynum {
+  color: var(--label);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.emptymsg {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 /* ---- min-width gate ---- */

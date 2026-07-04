@@ -1,0 +1,68 @@
+.newsitem {
+  display: grid;
+  grid-template-columns: 5ch 4ch 1fr 7ch;
+  gap: 8px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  align-items: baseline;
+}
+
+.newstime {
+  color: var(--label);
+  font-size: var(--fs-small);
+}
+
+.newssrc {
+  color: var(--amber);
+  font-size: var(--fs-small);
+  letter-spacing: 0.04em;
+}
+
+.newsbody {
+  min-width: 0;
+}
+
+.headline {
+  color: var(--white);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headline:hover {
+  text-decoration: underline;
+  color: var(--white);
+}
+
+.newscode {
+  color: var(--func);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.newscode:hover {
+  text-decoration: underline;
+}
+
+.salience {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-align: right;
+}
+
+/* News slide-in (required by the Phase-5 spec for SSE arrivals). */
+.slidein {
+  animation: news-slide 120ms ease-out;
+}
+
+@keyframes news-slide {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

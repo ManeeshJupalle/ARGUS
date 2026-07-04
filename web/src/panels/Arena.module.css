@@ -1,0 +1,53 @@
+.root {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cats {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+
+.cat {
+  color: var(--func);
+  font-weight: 700;
+  cursor: pointer;
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+}
+
+.cat:hover {
+  text-decoration: underline;
+}
+
+.catActive {
+  color: var(--amber);
+  font-weight: 700;
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--amber);
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.elo {
+  color: var(--amber);
+  font-size: var(--fs-header);
+  font-weight: 700;
+}

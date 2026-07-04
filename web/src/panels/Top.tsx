@@ -1,36 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { findCommand } from '@argus/shared';
-import type { CommandSpec, Envelope, NewsItem, Overview } from '@argus/shared';
+import type { Envelope, NewsItem, Overview } from '@argus/shared';
 import { api } from '../api/client';
 import { onSseEvent, onSseState } from '../api/sse';
 import { FlashValue } from '../components/FlashValue';
+import { NewsList } from '../components/NewsList';
 import { Panel } from '../components/Panel';
-import { deltaClass, fmtCompact, fmtDate, fmtDelta, fmtPct, fmtPrice, fmtTime, sourceCode } from '../lib/fmt';
-import { useArgusStore } from '../store/store';
+import { useTickerMap } from '../hooks/useTickerMap';
+import { dispatchFn, entityRef } from '../lib/dispatch';
+import { deltaClass, fmtCompact, fmtDate, fmtDelta, fmtPct, fmtPrice, fmtTime } from '../lib/fmt';
 import styles from './Top.module.css';
 
 const REFETCH_DEBOUNCE_MS = 400;
 const TREND_LOOKBACK_POINTS = 7;
 const NEWS_FEED_LIMIT = 40;
 
-/** id → display code for news model links (fetched once, tickers win). */
-function useTickerMap(): Map<string, string> {
-  const [map, setMap] = useState<Map<string, string>>(() => new Map());
-  useEffect(() => {
-    void fetch('/api/models')
-      .then((r) => r.json())
-      .then((body: Envelope<{ id: string; ticker: string | null }[]>) => {
-        setMap(new Map(body.data.map((m) => [m.id, m.ticker ?? m.id.split('/').pop()?.toUpperCase() ?? m.id])));
-      })
-      .catch(() => undefined);
-  }, []);
-  return map;
-}
-
 export function Top() {
   const [envelope, setEnvelope] = useState<Envelope<Overview> | null>(null);
   const [news, setNews] = useState<Envelope<NewsItem[]> | null>(null);
-  const setDispatch = useArgusStore((s) => s.setDispatch);
   const tickers = useTickerMap();
   const knownNewsIds = useRef<Set<string>>(new Set());
   const freshNewsIds = useRef<Set<string>>(new Set());
@@ -66,8 +52,7 @@ export function Top() {
       }, REFETCH_DEBOUNCE_MS);
     });
     // Resync on every (re)connect: events emitted while the stream was down
-    // are never replayed, so each 'live' transition refetches (the debounce
-    // coalesces the startup double-load).
+    // are never replayed.
     const offState = onSseState((s) => {
       if (s !== 'live') return;
       window.clearTimeout(debounce.current);
@@ -82,16 +67,10 @@ export function Top() {
     };
   }, [loadOverview, loadNews]);
 
-  const openDes = useCallback(
-    (id: string, code: string) => {
-      setDispatch({
-        spec: findCommand('DES') as CommandSpec,
-        entities: [{ id, ticker: code, name: code, via: 'id', score: 100 }],
-        args: {},
-      });
-    },
-    [setDispatch],
-  );
+  const code = (id: string, ticker: string | null): string =>
+    ticker ?? id.split('/').pop()?.toUpperCase() ?? id;
+  const openDes = (id: string, ticker: string | null) =>
+    dispatchFn('DES', [entityRef(id, code(id, ticker))]);
 
   if (!envelope) {
     return (
@@ -107,8 +86,6 @@ export function Top() {
   const trendPrev =
     trend.length > TREND_LOOKBACK_POINTS ? trend[trend.length - 1 - TREND_LOOKBACK_POINTS] : trend[0];
   const gapDelta = gap !== null && trendPrev?.gap != null ? gap - trendPrev.gap : null;
-  const code = (id: string, ticker: string | null): string =>
-    ticker ?? id.split('/').pop()?.toUpperCase() ?? id;
 
   return (
     <Panel fn="TOP" desc="Market overview" meta={`AS OF ${fmtTime(asOf)}`} stale={stale}>
@@ -181,7 +158,7 @@ export function Top() {
                   <tbody>
                     {data.price_movers.map((m) => (
                       <tr key={m.id}>
-                        <td className={styles.ticker} onClick={() => openDes(m.id, code(m.id, m.ticker))}>
+                        <td className={styles.ticker} onClick={() => openDes(m.id, m.ticker)}>
                           {code(m.id, m.ticker)}
                         </td>
                         <td className={`${styles.num} num ${styles.amber}`}>
@@ -216,7 +193,7 @@ export function Top() {
                   <tbody>
                     {data.arena_movers.map((m) => (
                       <tr key={m.id}>
-                        <td className={styles.ticker} onClick={() => openDes(m.id, code(m.id, m.ticker))}>
+                        <td className={styles.ticker} onClick={() => openDes(m.id, m.ticker)}>
                           {code(m.id, m.ticker)}
                         </td>
                         <td className={`${styles.num} num ${styles.amber}`}>
@@ -252,7 +229,7 @@ export function Top() {
                   <tbody>
                     {data.download_spikes.map((m) => (
                       <tr key={m.id}>
-                        <td className={styles.ticker} onClick={() => openDes(m.id, code(m.id, m.ticker))}>
+                        <td className={styles.ticker} onClick={() => openDes(m.id, m.ticker)}>
                           {code(m.id, m.ticker)}
                         </td>
                         <td className={`${styles.num} num ${styles.amber}`}>
@@ -280,7 +257,7 @@ export function Top() {
                 <tbody>
                   {data.newest.map((m) => (
                     <tr key={m.id}>
-                      <td className={styles.ticker} onClick={() => openDes(m.id, code(m.id, m.ticker))}>
+                      <td className={styles.ticker} onClick={() => openDes(m.id, m.ticker)}>
                         {code(m.id, m.ticker)}
                       </td>
                       <td className={styles.name}>{m.name}</td>
@@ -299,59 +276,10 @@ export function Top() {
             <div className={styles.sectiontitle}>
               Latest news{news?.stale ? <span className={styles.down}> · STALE</span> : null}
             </div>
-            <div className={styles.news}>
-              {(news?.data ?? []).map((n) => (
-                <NewsRow
-                  key={n.id}
-                  item={n}
-                  fresh={freshNewsIds.current.has(n.id)}
-                  tickers={tickers}
-                  onCode={openDes}
-                />
-              ))}
-            </div>
+            <NewsList items={news?.data ?? []} fresh={freshNewsIds.current} tickers={tickers} />
           </div>
         </div>
       </div>
     </Panel>
-  );
-}
-
-function NewsRow({
-  item,
-  fresh,
-  tickers,
-  onCode,
-}: {
-  item: NewsItem;
-  fresh: boolean;
-  tickers: Map<string, string>;
-  onCode: (id: string, code: string) => void;
-}) {
-  return (
-    <div className={`${styles.newsitem} ${fresh ? styles.slidein : ''}`}>
-      <span className={styles.newstime}>{fmtTime(item.ts)}</span>
-      <span className={styles.newssrc}>{sourceCode(item.source)}</span>
-      <span className={styles.newsbody}>
-        <a className={styles.headline} href={item.url} target="_blank" rel="noreferrer" title={item.title}>
-          {item.title}
-        </a>
-        {item.model_ids.length > 0 ? (
-          <span className={styles.newscodes}>
-            {item.model_ids.map((id) => {
-              const modelCode = tickers.get(id) ?? id.split('/').pop()?.toUpperCase() ?? id;
-              return (
-                <span key={id} className={styles.newscode} onClick={() => onCode(id, modelCode)}>
-                  {modelCode}
-                </span>
-              );
-            })}
-          </span>
-        ) : null}
-      </span>
-      <span className={styles.salience}>
-        {item.salience !== null && item.salience > 0 ? `${item.salience}▲` : ''}
-      </span>
-    </div>
   );
 }

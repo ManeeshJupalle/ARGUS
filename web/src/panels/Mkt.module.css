@@ -1,0 +1,96 @@
+.root {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.filter {
+  color: var(--func);
+  font-weight: 700;
+  cursor: pointer;
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+}
+
+.filter:hover {
+  text-decoration: underline;
+}
+
+.filterActive {
+  color: var(--amber);
+  font-weight: 700;
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--amber);
+}
+
+/* grid rows (not <table>) so the body can be virtualized */
+.headrow,
+.row {
+  display: grid;
+  grid-template-columns: 12ch 1fr 7ch 9ch 9ch 9ch 7ch 6ch 6ch 8ch 11ch;
+  gap: 0;
+  align-items: baseline;
+}
+
+.headrow {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.headcell {
+  color: var(--label);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  text-align: right;
+  padding: 3px 8px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.headcell:hover {
+  color: var(--white);
+}
+
+.headcell:first-child,
+.headcell:nth-child(2) {
+  text-align: left;
+}
+
+.sorted {
+  color: var(--amber);
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.row {
+  height: 20px;
+  line-height: 20px;
+}
+
+.cell {
+  font-size: var(--fs-data);
+  text-align: right;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell:first-child,
+.cell:nth-child(2) {
+  text-align: left;
+}
