@@ -42,7 +42,9 @@ async function waitForHealth() {
 
 try {
   console.log(`[smoke] fresh checkout → ${tempDir}`);
-  execSync(`git archive HEAD | tar -x -C "${tempDir}"`, { stdio: 'inherit', shell: true });
+  // checkout-index is portable (Windows tar variants mangle drive paths).
+  const fwd = tempDir.replaceAll('\\', '/');
+  execSync(`git checkout-index -a --prefix="${fwd}/"`, { stdio: 'inherit' });
 
   console.log('[smoke] npm install (this is the slow step)…');
   sh('npm install --no-audit --no-fund', tempDir);
