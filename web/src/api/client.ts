@@ -10,6 +10,7 @@ import type {
   PricePoint,
   SearchResult,
   SourceStatus,
+  StatPayload,
   WatchQuote,
 } from '@argus/shared';
 
@@ -52,6 +53,7 @@ export const api = {
     const res = await get<SearchResult[]>(`/api/search?q=${encodeURIComponent(q)}`);
     return res.data;
   },
+  stat: () => get<StatPayload>('/api/stat'),
   watchlist: () => get<WatchQuote[]>('/api/watchlist'),
   watchAdd: (model_id: string) =>
     req<{ ok: boolean }>('/api/watchlist', {

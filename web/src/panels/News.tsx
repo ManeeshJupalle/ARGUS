@@ -3,10 +3,10 @@ import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { NewsList } from '../components/NewsList';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { useTickerMap } from '../hooks/useTickerMap';
 import { fmtTime } from '../lib/fmt';
-import common from './common.module.css';
 
 const LIMIT = 100;
 
@@ -17,7 +17,7 @@ export function News({ dispatch }: { dispatch: Dispatch }) {
   const known = useRef<Set<string>>(new Set());
   const fresh = useRef<Set<string>>(new Set());
 
-  const { env, error, loading } = useEnvelope(
+  const state = useEnvelope(
     async () => {
       const res = await api.news(LIMIT, entity?.id);
       const incoming = new Set(res.data.map((n) => n.id));
@@ -29,20 +29,18 @@ export function News({ dispatch }: { dispatch: Dispatch }) {
     (e) => e.type === 'news',
   );
 
-  const items = env?.data ?? [];
+  const { env } = state;
   const desc = entity ? `news · ${entity.ticker ?? entity.id.toUpperCase()}` : 'news feed';
 
   return (
     <Panel fn="NEWS" desc={desc} meta={env ? `AS OF ${fmtTime(env.asOf)}` : undefined} stale={env?.stale}>
-      {loading ? (
-        <div className={common.note}>LOADING…</div>
-      ) : error ? (
-        <div className={common.error}>API ERROR — {error}</div>
-      ) : items.length === 0 ? (
-        <div className={common.note}>NO NEWS{entity ? ` LINKED TO ${entity.ticker ?? entity.id.toUpperCase()}` : ''}</div>
-      ) : (
-        <NewsList items={items} fresh={fresh.current} tickers={tickers} />
-      )}
+      <PanelData
+        state={state}
+        isEmpty={(items) => items.length === 0}
+        emptyText={`NO NEWS${entity ? ` LINKED TO ${entity.ticker ?? entity.id.toUpperCase()}` : ''}`}
+      >
+        {(items) => <NewsList items={items} fresh={fresh.current} tickers={tickers} />}
+      </PanelData>
     </Panel>
   );
 }

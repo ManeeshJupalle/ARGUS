@@ -63,17 +63,20 @@ export function CommandLine() {
     if (tokens.length !== 1 || /\s$/.test(next) || findCommand(tokens[0] as string)) return;
     const query = tokens[0] as string;
     entityGhostTimer.current = window.setTimeout(() => {
-      void api.search(query).then((results) => {
-        const ticker = results[0]?.ticker;
-        if (!ticker) return;
-        if (
-          ticker.toUpperCase().startsWith(query.toUpperCase()) &&
-          ticker.length > query.length &&
-          inputRef.current?.value === next
-        ) {
-          setGhost(ticker.slice(query.length));
-        }
-      });
+      void api
+        .search(query)
+        .then((results) => {
+          const ticker = results[0]?.ticker;
+          if (!ticker) return;
+          if (
+            ticker.toUpperCase().startsWith(query.toUpperCase()) &&
+            ticker.length > query.length &&
+            inputRef.current?.value === next
+          ) {
+            setGhost(ticker.slice(query.length));
+          }
+        })
+        .catch(() => undefined); // ghost text silently disappears when the API is down
     }, ENTITY_GHOST_DEBOUNCE_MS);
   }, []);
 

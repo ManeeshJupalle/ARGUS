@@ -24,6 +24,8 @@ import type {
   Overview,
   PricePoint,
   SearchResult,
+  StatPayload,
+  StatSource,
   WatchQuote,
 } from '@argus/shared';
 import { getSourceStatuses } from '../db/db';
@@ -504,6 +506,65 @@ export function registerApiRoutes(
     const parsed = searchQuery.safeParse(c.req.query());
     if (!parsed.success) return badRequest(c, parsed.error);
     return ok(c, search(db, parsed.data.q), now(), false);
+  });
+
+  /* ---- GET /api/stat — PHASE-7 plumbing-on-display (STAT panel) ---- */
+
+  /** source_status name → the table its rows land in. */
+  const SOURCE_ROWS: Record<string, { table: string; where?: string }> = {
+    openrouter: { table: 'price_snapshot' },
+    lmarena: { table: 'arena_snapshot' },
+    'hf-hub': { table: 'hub_snapshot' },
+  };
+
+  app.get('/api/stat', (c) => {
+    const count = (sql: string, ...params: unknown[]): number =>
+      (db.prepare(sql).get(...params) as { n: number }).n;
+
+    const sources: StatSource[] = getSourceStatuses(db)
+      .filter((s) => s.source !== 'heartbeat')
+      .map((s) => {
+        const mapped = SOURCE_ROWS[s.source];
+        const rows = mapped
+          ? count(`SELECT COUNT(*) AS n FROM ${mapped.table}`)
+          : s.source === 'hn' || s.source === 'arxiv' || s.source.startsWith('rss:')
+            ? count(`SELECT COUNT(*) AS n FROM news_item WHERE source = ?`, s.source)
+            : null;
+        return {
+          source: s.source,
+          cadence_ms: cadences.get(s.source) ?? null,
+          stale: staleness.any([s.source]),
+          last_success: s.last_success,
+          last_error: s.last_error,
+          consecutive_failures: s.consecutive_failures,
+          rows,
+          quarantined: count(`SELECT COUNT(*) AS n FROM quarantine WHERE source = ?`, s.source),
+        };
+      });
+
+    const span = db
+      .prepare(
+        `SELECT MIN(ts) AS min, MAX(ts) AS max, COUNT(DISTINCT ts) AS dates FROM arena_snapshot`,
+      )
+      .get() as { min: string | null; max: string | null; dates: number };
+
+    const data: StatPayload = {
+      sources,
+      totals: {
+        models: count(`SELECT COUNT(*) AS n FROM model`),
+        open_models: count(`SELECT COUNT(*) AS n FROM model WHERE openness = 'open'`),
+        price_snapshots: count(`SELECT COUNT(*) AS n FROM price_snapshot`),
+        arena_snapshots: count(`SELECT COUNT(*) AS n FROM arena_snapshot`),
+        hub_snapshots: count(`SELECT COUNT(*) AS n FROM hub_snapshot`),
+        bench_scores: count(`SELECT COUNT(*) AS n FROM bench_score`),
+        news_items: count(`SELECT COUNT(*) AS n FROM news_item`),
+        aliases: count(`SELECT COUNT(*) AS n FROM entity_alias`),
+        quarantined: count(`SELECT COUNT(*) AS n FROM quarantine`),
+        watchlist: count(`SELECT COUNT(*) AS n FROM watchlist`),
+      },
+      arena_span: { min: span.min, max: span.max, distinct_dates: span.dates },
+    };
+    return ok(c, data, now(), false);
   });
 
   /* ---- watchlist (PHASE-6) ------------------------------------------------

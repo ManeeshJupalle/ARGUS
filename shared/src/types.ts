@@ -321,6 +321,36 @@ export interface WatchQuote {
   elo_delta_7d: number | null;
 }
 
+/** GET /api/stat — PHASE-7 plumbing-on-display payload (STAT panel). */
+export interface StatSource {
+  source: string;
+  cadence_ms: number | null;
+  stale: boolean;
+  last_success: string | null;
+  last_error: string | null;
+  consecutive_failures: number;
+  /** Snapshot/news rows attributable to this source; null when not mapped. */
+  rows: number | null;
+  quarantined: number;
+}
+
+export interface StatPayload {
+  sources: StatSource[];
+  totals: {
+    models: number;
+    open_models: number;
+    price_snapshots: number;
+    arena_snapshots: number;
+    hub_snapshots: number;
+    bench_scores: number;
+    news_items: number;
+    aliases: number;
+    quarantined: number;
+    watchlist: number;
+  };
+  arena_span: { min: string | null; max: string | null; distinct_dates: number };
+}
+
 /* ------------------------------------------------------------------------ *
  * PHASE-4: SSE events (GET /api/stream). Emitted after each poll cycle with
  * just-changed ids; clients refetch the endpoints they care about.

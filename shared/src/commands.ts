@@ -28,6 +28,8 @@ export interface CommandSpec {
   args: readonly ArgSpec[];
   /** First phase whose panel really implements it; earlier phases stub. */
   implementedInPhase: number;
+  /** One real, runnable example shown in HELP. */
+  example: string;
 }
 
 const ARENA_CATEGORIES: Readonly<Record<string, string>> = {
@@ -52,6 +54,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'none',
     args: [],
     implementedInPhase: 5,
+    example: 'TOP',
   },
   {
     fn: 'DES',
@@ -60,6 +63,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'required',
     args: [],
     implementedInPhase: 6,
+    example: 'FABLE5 DES',
   },
   {
     fn: 'PX',
@@ -70,6 +74,7 @@ export const COMMANDS: readonly CommandSpec[] = [
       { name: 'range', kind: 'enum', required: false, values: Object.keys(RANGES), mapTo: RANGES },
     ],
     implementedInPhase: 6,
+    example: 'FABLE5 PX 90D',
   },
   {
     fn: 'ARENA',
@@ -86,6 +91,7 @@ export const COMMANDS: readonly CommandSpec[] = [
       },
     ],
     implementedInPhase: 6,
+    example: 'FABLE5 ARENA CODING',
   },
   {
     fn: 'BENCH',
@@ -94,6 +100,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'list',
     args: [],
     implementedInPhase: 6,
+    example: 'BENCH FABLE5 GPT55 GLM5',
   },
   {
     fn: 'NEWS',
@@ -102,6 +109,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'optional',
     args: [],
     implementedInPhase: 6,
+    example: 'NEWS FABLE5',
   },
   {
     fn: 'WATCH',
@@ -113,6 +121,7 @@ export const COMMANDS: readonly CommandSpec[] = [
       { name: 'entity', kind: 'entity', required: false },
     ],
     implementedInPhase: 6,
+    example: 'WATCH ADD FABLE5',
   },
   {
     fn: 'MKT',
@@ -129,6 +138,7 @@ export const COMMANDS: readonly CommandSpec[] = [
       },
     ],
     implementedInPhase: 6,
+    example: 'MKT OPEN',
   },
   {
     fn: 'MOV',
@@ -137,6 +147,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'none',
     args: [],
     implementedInPhase: 6,
+    example: 'MOV',
   },
   {
     fn: 'STAT',
@@ -145,6 +156,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'none',
     args: [],
     implementedInPhase: 7,
+    example: 'STAT',
   },
   {
     fn: 'HELP',
@@ -153,6 +165,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'none',
     args: [],
     implementedInPhase: 5,
+    example: 'HELP',
   },
   {
     fn: 'LAYOUT',
@@ -161,6 +174,7 @@ export const COMMANDS: readonly CommandSpec[] = [
     entity: 'none',
     args: [{ name: 'preset', kind: 'enum', required: true, values: ['1', '2', '4'] }],
     implementedInPhase: 6,
+    example: 'LAYOUT 4',
   },
 ] as const;
 

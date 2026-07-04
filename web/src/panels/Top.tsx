@@ -8,6 +8,7 @@ import { Panel } from '../components/Panel';
 import { useTickerMap } from '../hooks/useTickerMap';
 import { dispatchFn, entityRef } from '../lib/dispatch';
 import { deltaClass, fmtCompact, fmtDate, fmtDelta, fmtPct, fmtPrice, fmtTime } from '../lib/fmt';
+import common from './common.module.css';
 import styles from './Top.module.css';
 
 const REFETCH_DEBOUNCE_MS = 400;
@@ -17,13 +18,20 @@ const NEWS_FEED_LIMIT = 40;
 export function Top() {
   const [envelope, setEnvelope] = useState<Envelope<Overview> | null>(null);
   const [news, setNews] = useState<Envelope<NewsItem[]> | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const tickers = useTickerMap();
   const knownNewsIds = useRef<Set<string>>(new Set());
   const freshNewsIds = useRef<Set<string>>(new Set());
   const debounce = useRef<number | undefined>(undefined);
 
   const loadOverview = useCallback(() => {
-    void api.overview().then(setEnvelope).catch(() => undefined);
+    void api
+      .overview()
+      .then((env) => {
+        setEnvelope(env);
+        setError(null);
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
 
   const loadNews = useCallback(() => {
@@ -72,10 +80,24 @@ export function Top() {
   const openDes = (id: string, ticker: string | null) =>
     dispatchFn('DES', [entityRef(id, code(id, ticker))]);
 
+  const retryAll = () => {
+    loadOverview();
+    loadNews();
+  };
+
   if (!envelope) {
     return (
       <Panel fn="TOP" desc="Market overview">
-        <div className={styles.note}>LOADING…</div>
+        {error ? (
+          <div className={common.error}>
+            API UNREACHABLE — {error}{' '}
+            <span className={common.code} onClick={retryAll}>
+              RETRY
+            </span>
+          </div>
+        ) : (
+          <div className={styles.note}>LOADING…</div>
+        )}
       </Panel>
     );
   }
@@ -89,6 +111,14 @@ export function Top() {
 
   return (
     <Panel fn="TOP" desc="Market overview" meta={`AS OF ${fmtTime(asOf)}`} stale={stale}>
+      {error ? (
+        <div className={common.error}>
+          REFRESH FAILED — {error} · SHOWING LAST DATA{' '}
+          <span className={common.code} onClick={retryAll}>
+            RETRY
+          </span>
+        </div>
+      ) : null}
       <div className={styles.root}>
         {/* ---- stat strip ---- */}
         <div className={styles.strip}>

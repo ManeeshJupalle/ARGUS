@@ -25,7 +25,8 @@ export type CommandError =
   | { code: 'UNKNOWN_FUNCTION'; message: string }
   | { code: 'BAD_ARGS'; message: string }
   | { code: 'UNKNOWN_ENTITY'; message: string }
-  | { code: 'AMBIGUOUS_ENTITY'; message: string; candidates: SearchResult[] };
+  | { code: 'AMBIGUOUS_ENTITY'; message: string; candidates: SearchResult[] }
+  | { code: 'SEARCH_FAILED'; message: string };
 
 export type EntityResolver = (query: string) => Promise<SearchResult[]>;
 
@@ -174,7 +175,17 @@ export async function executeCommand(
 
   const entities: SearchResult[] = [];
   for (const query of parsed.entityQueries) {
-    const pick = pickEntity(query, await resolver(query));
+    let results: SearchResult[];
+    try {
+      results = await resolver(query);
+    } catch (err) {
+      // A dead API must degrade to an inline message, not an exception.
+      return {
+        code: 'SEARCH_FAILED',
+        message: `ENTITY SEARCH FAILED — ${err instanceof Error ? err.message : 'API UNREACHABLE'}`,
+      };
+    }
+    const pick = pickEntity(query, results);
     if (pick.kind === 'miss') {
       return {
         code: 'UNKNOWN_ENTITY',

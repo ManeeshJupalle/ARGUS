@@ -1,6 +1,7 @@
 import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn, entityRef } from '../lib/dispatch';
 import { deltaClass, fmtCompact, fmtDelta, fmtPct, fmtPrice, fmtTime } from '../lib/fmt';
@@ -8,12 +9,8 @@ import common from './common.module.css';
 
 /** MOV — movers detail: price cuts, arena rank jumps, download spikes. */
 export function Mov({ dispatch: _d }: { dispatch: Dispatch }) {
-  const { env, error, loading } = useEnvelope(
-    () => api.overview(),
-    [],
-    (e) => e.type === 'snapshot',
-  );
-  const d = env?.data;
+  const state = useEnvelope(() => api.overview(), [], (e) => e.type === 'snapshot');
+  const { env } = state;
 
   const code = (id: string, ticker: string | null): string =>
     ticker ?? id.split('/').pop()?.toUpperCase() ?? id;
@@ -21,13 +18,8 @@ export function Mov({ dispatch: _d }: { dispatch: Dispatch }) {
 
   return (
     <Panel fn="MOV" desc="Top movers · 24H/7D" meta={env ? `AS OF ${fmtTime(env.asOf)}` : undefined} stale={env?.stale}>
-      {loading ? (
-        <div className={common.note}>LOADING…</div>
-      ) : error ? (
-        <div className={common.error}>API ERROR — {error}</div>
-      ) : !d ? (
-        <div className={common.note}>NO DATA</div>
-      ) : (
+      <PanelData state={state}>
+        {(d) => (
         <>
           <div className={common.sectiontitle}>Price movers · prompt $/MTok · Δ24H/7D</div>
           {d.price_movers.length === 0 ? (
@@ -109,7 +101,8 @@ export function Mov({ dispatch: _d }: { dispatch: Dispatch }) {
             </table>
           )}
         </>
-      )}
+        )}
+      </PanelData>
     </Panel>
   );
 }

@@ -247,6 +247,13 @@ describe('entity resolution', () => {
     expect(e.message).toContain('QWEN34B');
   });
 
+  it('resolver failure degrades to an inline SEARCH_FAILED error (PHASE-7 audit)', async () => {
+    const failing: EntityResolver = () => Promise.reject(new Error('HTTP 500'));
+    const r = await executeCommand('FABLE5 DES', failing);
+    expect(r).toMatchObject({ code: 'SEARCH_FAILED' });
+    if ('code' in r) expect(r.message).toContain('HTTP 500');
+  });
+
   it('exact ticker match wins even with close seconds', () => {
     const results: SearchResult[] = [
       { id: 'a/x', ticker: 'QWEN32B', name: 'X', via: 'ticker', score: 90 },

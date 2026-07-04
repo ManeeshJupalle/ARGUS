@@ -1,6 +1,7 @@
 import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn, prefillCommand } from '../lib/dispatch';
 import { fmtCompact, fmtDate, fmtInt, fmtPrice, fmtTime } from '../lib/fmt';
@@ -12,24 +13,18 @@ export function Des({ dispatch }: { dispatch: Dispatch }) {
   const entity = dispatch.entities[0];
   const id = entity?.id ?? '';
 
-  const { env, error, loading } = useEnvelope(
+  const state = useEnvelope(
     () => api.detail(id),
     [id],
     (e) => (e.type === 'snapshot' || e.type === 'news') && e.model_ids.includes(id),
   );
-
-  const d = env?.data;
-  const code = d?.model.ticker ?? entity?.ticker ?? id.toUpperCase();
+  const { env } = state;
+  const code = env?.data.model.ticker ?? entity?.ticker ?? id.toUpperCase();
 
   return (
     <Panel fn="DES" desc={`${code} description`} meta={env ? `AS OF ${fmtTime(env.asOf)}` : undefined} stale={env?.stale}>
-      {loading ? (
-        <div className={common.note}>LOADING…</div>
-      ) : error ? (
-        <div className={common.error}>API ERROR — {error}</div>
-      ) : !d ? (
-        <div className={common.note}>NO DATA</div>
-      ) : (
+      <PanelData state={state}>
+        {(d) => (
         <div className={styles.root}>
           <div className={styles.cols}>
             <div className={styles.col}>
@@ -161,7 +156,8 @@ export function Des({ dispatch }: { dispatch: Dispatch }) {
             ) : null}
           </div>
         </div>
-      )}
+        )}
+      </PanelData>
     </Panel>
   );
 }

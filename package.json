@@ -3,6 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "description": "ARGUS — a Bloomberg-style terminal for the AI model ecosystem",
+  "author": "ManeeshJupalle <maneeshreddy28@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ManeeshJupalle/ARGUS.git"
+  },
   "engines": {
     "node": ">=20"
   },
@@ -15,10 +21,16 @@
     "dev": "concurrently -k -n server,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
     "reset": "npm run reset -w server",
     "seed": "npm run seed -w server",
+    "smoke": "node scripts/smoke.mjs",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.1": true,
+    "esbuild@0.25.12": true
   }
 }

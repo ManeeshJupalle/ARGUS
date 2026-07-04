@@ -1,6 +1,7 @@
 import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn, entityRef } from '../lib/dispatch';
 import { fmtTime } from '../lib/fmt';
@@ -23,13 +24,12 @@ function fmtCell(key: string, v: number): string {
 export function Bench({ dispatch }: { dispatch: Dispatch }) {
   const ids = dispatch.entities.map((e) => e.id);
 
-  const { env, error, loading } = useEnvelope(
+  const state = useEnvelope(
     () => api.compare(ids),
     [ids.join(',')],
     (e) => e.type === 'snapshot' && e.model_ids.some((id) => ids.includes(id)),
   );
-
-  const d = env?.data;
+  const { env } = state;
 
   return (
     <Panel
@@ -38,13 +38,8 @@ export function Bench({ dispatch }: { dispatch: Dispatch }) {
       meta={env ? `AS OF ${fmtTime(env.asOf)}` : undefined}
       stale={env?.stale}
     >
-      {loading ? (
-        <div className={common.note}>LOADING…</div>
-      ) : error ? (
-        <div className={common.error}>API ERROR — {error}</div>
-      ) : !d ? (
-        <div className={common.note}>NO DATA</div>
-      ) : (
+      <PanelData state={state}>
+        {(d) => (
         <table className={styles.matrix}>
           <colgroup>
             <col style={{ width: '34ch' }} />
@@ -102,7 +97,8 @@ export function Bench({ dispatch }: { dispatch: Dispatch }) {
             })}
           </tbody>
         </table>
-      )}
+        )}
+      </PanelData>
     </Panel>
   );
 }

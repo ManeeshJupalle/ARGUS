@@ -3,6 +3,7 @@ import type { Time } from 'lightweight-charts';
 import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { TerminalChart, type ChartSeries } from '../components/TerminalChart';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn } from '../lib/dispatch';
@@ -19,11 +20,12 @@ export function Px({ dispatch }: { dispatch: Dispatch }) {
   const id = entity?.id ?? '';
   const code = entity?.ticker ?? id.toUpperCase();
 
-  const { env, error, loading } = useEnvelope(
+  const state = useEnvelope(
     () => api.prices(id, range),
     [id, range],
     (e) => e.type === 'snapshot' && e.fields.includes('price') && e.model_ids.includes(id),
   );
+  const { env } = state;
 
   const points = env?.data ?? [];
   const series = useMemo<ChartSeries[]>(
@@ -83,19 +85,19 @@ export function Px({ dispatch }: { dispatch: Dispatch }) {
             ))}
           </span>
         </div>
-        {loading ? (
-          <div className={common.note}>LOADING…</div>
-        ) : error ? (
-          <div className={common.error}>API ERROR — {error}</div>
-        ) : points.length === 0 ? (
-          <div className={common.note}>NO PRICE HISTORY — MODEL IS NOT SERVED VIA OPENROUTER</div>
-        ) : points.length < 2 ? (
-          <div className={common.note}>
-            ONLY {points.length} TICK YET — HISTORY ACCRUES EVERY 15 MINUTES
-          </div>
-        ) : (
-          <TerminalChart series={series} />
-        )}
+        <PanelData
+          state={state}
+          isEmpty={(pts) => pts.length === 0}
+          emptyText="NO PRICE HISTORY — MODEL IS NOT SERVED VIA OPENROUTER"
+        >
+          {(pts) =>
+            pts.length < 2 ? (
+              <div className={common.note}>ONLY {pts.length} TICK YET — HISTORY ACCRUES EVERY 15 MINUTES</div>
+            ) : (
+              <TerminalChart series={series} />
+            )
+          }
+        </PanelData>
       </div>
     </Panel>
   );

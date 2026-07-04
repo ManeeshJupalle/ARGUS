@@ -48,7 +48,7 @@
 }
 
 .keys {
-  padding: 8px 10px;
+  padding: 6px 10px 8px;
   color: var(--label);
   font-size: var(--fs-small);
   text-transform: uppercase;
@@ -58,4 +58,31 @@
 .keys b {
   color: var(--amber);
   font-weight: 400;
+}
+
+.primer {
+  padding: 8px 10px 2px;
+  color: var(--label);
+  font-size: var(--fs-data);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grammar {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.args {
+  color: var(--label);
+  font-size: var(--fs-small);
+}
+
+.example {
+  color: var(--func);
+  cursor: pointer;
+}
+
+.example:hover {
+  text-decoration: underline;
 }

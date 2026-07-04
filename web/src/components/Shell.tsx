@@ -10,6 +10,7 @@ import { Mkt } from '../panels/Mkt';
 import { Mov } from '../panels/Mov';
 import { News } from '../panels/News';
 import { Px } from '../panels/Px';
+import { Stat } from '../panels/Stat';
 import { Stub } from '../panels/Stub';
 import { Top } from '../panels/Top';
 import { Watch } from '../panels/Watch';
@@ -17,9 +18,11 @@ import { CommandLine } from './CommandLine';
 import { StatusBar } from './StatusBar';
 import styles from './Shell.module.css';
 
-/** Dispatch → panel component. STAT stays a stub until Phase 7. */
+/** Dispatch → panel component. Every §7 function is live as of Phase 7. */
 function PanelFor({ dispatch }: { dispatch: Dispatch }) {
   switch (dispatch.spec.fn) {
+    case 'STAT':
+      return <Stat dispatch={dispatch} />;
     case 'TOP':
       return <Top />;
     case 'HELP':

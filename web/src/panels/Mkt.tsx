@@ -3,6 +3,7 @@ import type { MarketRow } from '@argus/shared';
 import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn, entityRef } from '../lib/dispatch';
 import { fmtCompact, fmtDate, fmtPrice, fmtTime } from '../lib/fmt';
@@ -37,11 +38,8 @@ export function Mkt({ dispatch }: { dispatch: Dispatch }) {
   const [scrollTop, setScrollTop] = useState(0);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  const { env, error, loading } = useEnvelope(
-    () => api.models(filter),
-    [filter],
-    (e) => e.type === 'snapshot',
-  );
+  const state = useEnvelope(() => api.models(filter), [filter], (e) => e.type === 'snapshot');
+  const { env } = state;
 
   const rows = useMemo(() => {
     const data = [...(env?.data ?? [])];
@@ -113,19 +111,17 @@ export function Mkt({ dispatch }: { dispatch: Dispatch }) {
           {head('downloads', 'DL')}
           {head('released_at', 'RELEASED')}
         </div>
-        {loading ? (
-          <div className={common.note}>LOADING…</div>
-        ) : error ? (
-          <div className={common.error}>API ERROR — {error}</div>
-        ) : (
-          <div ref={bodyRef} className={styles.body} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
-            <div style={{ height: start * ROW_H }} />
-            {visible.map((m) => (
-              <MktRow key={m.id} m={m} />
-            ))}
-            <div style={{ height: (rows.length - end) * ROW_H }} />
-          </div>
-        )}
+        <PanelData state={state} isEmpty={(data) => data.length === 0} emptyText="NO MODELS MATCH">
+          {() => (
+            <div ref={bodyRef} className={styles.body} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
+              <div style={{ height: start * ROW_H }} />
+              {visible.map((m) => (
+                <MktRow key={m.id} m={m} />
+              ))}
+              <div style={{ height: (rows.length - end) * ROW_H }} />
+            </div>
+          )}
+        </PanelData>
       </div>
     </Panel>
   );

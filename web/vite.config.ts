@@ -10,8 +10,9 @@ export default defineConfig({
   server: {
     proxy: {
       // Everything under /api is served by the Hono server (§3: the browser
-      // never talks to external APIs, only the internal one).
-      '/api': 'http://127.0.0.1:3001',
+      // never talks to external APIs, only the internal one). ARGUS_API lets
+      // docker-compose point at the server container.
+      '/api': process.env.ARGUS_API ?? 'http://127.0.0.1:3001',
     },
   },
 });

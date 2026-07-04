@@ -1,0 +1,23 @@
+# docker compose up  →  seeded terminal at http://localhost:5173
+services:
+  server:
+    build: .
+    # Seed once on first boot (the volume keeps the DB), then start polling.
+    command: sh -c "test -f server/data/argus.db || npm run seed; npm run start -w server"
+    volumes:
+      - argus-data:/app/server/data
+    ports:
+      - "3001:3001"
+
+  web:
+    build: .
+    command: npm run dev -w web -- --host 0.0.0.0
+    environment:
+      - ARGUS_API=http://server:3001
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  argus-data:

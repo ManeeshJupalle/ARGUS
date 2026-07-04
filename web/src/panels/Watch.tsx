@@ -2,6 +2,7 @@ import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { FlashValue } from '../components/FlashValue';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn, entityRef } from '../lib/dispatch';
 import { deltaClass, fmtDelta, fmtPct, fmtPrice, fmtTime } from '../lib/fmt';
@@ -12,11 +13,8 @@ import common from './common.module.css';
 export function Watch({ dispatch: _d }: { dispatch: Dispatch }) {
   const watchVersion = useArgusStore((s) => s.watchVersion);
 
-  const { env, error, loading } = useEnvelope(
-    () => api.watchlist(),
-    [watchVersion],
-    (e) => e.type === 'snapshot',
-  );
+  const state = useEnvelope(() => api.watchlist(), [watchVersion], (e) => e.type === 'snapshot');
+  const { env } = state;
   const quotes = env?.data ?? [];
 
   return (
@@ -26,13 +24,12 @@ export function Watch({ dispatch: _d }: { dispatch: Dispatch }) {
       meta={env ? `${quotes.length} WATCHED · AS OF ${fmtTime(env.asOf)}` : undefined}
       stale={env?.stale}
     >
-      {loading ? (
-        <div className={common.note}>LOADING…</div>
-      ) : error ? (
-        <div className={common.error}>API ERROR — {error}</div>
-      ) : quotes.length === 0 ? (
-        <div className={common.note}>WATCHLIST EMPTY — TYPE: WATCH ADD ‹TICKER› ‹GO›</div>
-      ) : (
+      <PanelData
+        state={state}
+        isEmpty={(qs) => qs.length === 0}
+        emptyText="WATCHLIST EMPTY — TYPE: WATCH ADD ‹TICKER› ‹GO›"
+      >
+        {(qs) => (
         <table className={common.table}>
           <colgroup>
             <col style={{ width: '13ch' }} />
@@ -61,7 +58,7 @@ export function Watch({ dispatch: _d }: { dispatch: Dispatch }) {
             </tr>
           </thead>
           <tbody>
-            {quotes.map((q) => {
+            {qs.map((q) => {
               const code = q.ticker ?? q.id.split('/').pop()?.toUpperCase() ?? q.id;
               return (
                 <tr key={q.id}>
@@ -100,7 +97,8 @@ export function Watch({ dispatch: _d }: { dispatch: Dispatch }) {
             })}
           </tbody>
         </table>
-      )}
+        )}
+      </PanelData>
     </Panel>
   );
 }

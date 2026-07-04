@@ -3,6 +3,7 @@ import type { Time } from 'lightweight-charts';
 import { api } from '../api/client';
 import type { Dispatch } from '../command/parser';
 import { Panel } from '../components/Panel';
+import { PanelData } from '../components/PanelData';
 import { TerminalChart, type ChartSeries } from '../components/TerminalChart';
 import { useEnvelope } from '../hooks/useEnvelope';
 import { dispatchFn, entityRef } from '../lib/dispatch';
@@ -47,11 +48,12 @@ export function Arena({ dispatch }: { dispatch: Dispatch }) {
 }
 
 function ArenaBoard({ category }: { category: string }) {
-  const { env, error, loading } = useEnvelope(
+  const state = useEnvelope(
     () => api.leaderboard(category),
     [category],
     (e) => e.type === 'snapshot' && e.fields.includes('arena'),
   );
+  const { env } = state;
   const board = env?.data;
 
   return (
@@ -70,13 +72,12 @@ function ArenaBoard({ category }: { category: string }) {
           <CategoryStrip active={category} onPick={(v) => dispatchFn('ARENA', [], { category: v })} />
         </div>
         <div className={styles.body}>
-          {loading ? (
-            <div className={common.note}>LOADING…</div>
-          ) : error ? (
-            <div className={common.error}>API ERROR — {error}</div>
-          ) : !board || board.rows.length === 0 ? (
-            <div className={common.note}>NO BOARD FOR '{category.toUpperCase()}'</div>
-          ) : (
+          <PanelData
+            state={state}
+            isEmpty={(b) => b.rows.length === 0}
+            emptyText={`NO BOARD FOR '${category.toUpperCase()}'`}
+          >
+            {(b) => (
             <table className={common.table}>
               <colgroup>
                 <col style={{ width: '6ch' }} />
@@ -103,7 +104,7 @@ function ArenaBoard({ category }: { category: string }) {
                 </tr>
               </thead>
               <tbody>
-                {board.rows.map((r) => (
+                {b.rows.map((r) => (
                   <tr key={r.id}>
                     <td className={`${common.amber} num`} style={{ textAlign: 'right' }}>
                       #{r.rank}
@@ -140,7 +141,8 @@ function ArenaBoard({ category }: { category: string }) {
                 ))}
               </tbody>
             </table>
-          )}
+            )}
+          </PanelData>
         </div>
       </div>
     </Panel>
@@ -151,11 +153,12 @@ function ArenaHistory({ dispatch, id, category }: { dispatch: Dispatch; id: stri
   const entity = dispatch.entities[0];
   const code = entity?.ticker ?? id.toUpperCase();
 
-  const { env, error, loading } = useEnvelope(
+  const state = useEnvelope(
     () => api.arenaSeries(id, category),
     [id, category],
     (e) => e.type === 'snapshot' && e.fields.includes('arena') && e.model_ids.includes(id),
   );
+  const { env } = state;
   const points = env?.data.points ?? [];
 
   const series = useMemo<ChartSeries[]>(
@@ -205,22 +208,22 @@ function ArenaHistory({ dispatch, id, category }: { dispatch: Dispatch; id: stri
             onPick={(v) => entity && dispatchFn('ARENA', [entity], { category: v })}
           />
         </div>
-        {loading ? (
-          <div className={common.note}>LOADING…</div>
-        ) : error ? (
-          <div className={common.error}>API ERROR — {error}</div>
-        ) : points.length === 0 ? (
-          <div className={common.note}>
-            NO ARENA HISTORY FOR {code} IN '{category.toUpperCase()}'
-          </div>
-        ) : points.length < 2 ? (
-          <div className={common.note}>
-            ONLY {points.length} BOARD IN '{category.toUpperCase()}' YET — SUB-CATEGORY HISTORY
-            ACCRUES DAILY (TEXT HAS THE 2-YEAR BACKFILL)
-          </div>
-        ) : (
-          <TerminalChart series={series} />
-        )}
+        <PanelData
+          state={state}
+          isEmpty={(d) => d.points.length === 0}
+          emptyText={`NO ARENA HISTORY FOR ${code} IN '${category.toUpperCase()}'`}
+        >
+          {(d) =>
+            d.points.length < 2 ? (
+              <div className={common.note}>
+                ONLY {d.points.length} BOARD IN '{category.toUpperCase()}' YET — SUB-CATEGORY HISTORY
+                ACCRUES DAILY (TEXT HAS THE 2-YEAR BACKFILL)
+              </div>
+            ) : (
+              <TerminalChart series={series} />
+            )
+          }
+        </PanelData>
       </div>
     </Panel>
   );
