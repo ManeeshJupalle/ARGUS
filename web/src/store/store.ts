@@ -78,6 +78,16 @@ function hydrate(stored: StoredLayout): Pick<ArgusStore, 'layout' | 'focused' | 
 function load(): Pick<ArgusStore, 'layout' | 'focused' | 'panels'> {
   const fallback = { layout: 1 as LayoutPreset, focused: 0, panels: Array<Dispatch | null>(SLOTS).fill(null) };
   try {
+    // The saved workspace survives reloads (F5) and history re-entries only.
+    // A fresh URL entry is a new session: land on the home screen (TOP).
+    const nav = performance.getEntriesByType('navigation')[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    const navType = nav?.type ?? 'navigate';
+    if (navType !== 'reload' && navType !== 'back_forward') {
+      persist(fallback);
+      return fallback;
+    }
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const stored = JSON.parse(raw) as StoredLayout;
