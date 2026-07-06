@@ -9,6 +9,10 @@ import type { SseState } from '../api/sse';
  * Global terminal state. PHASE-6: up to four panel slots (LAYOUT 1/2/4),
  * a focused slot that commands execute into, and localStorage persistence
  * of the layout + panel dispatches across reloads.
+ *
+ * Browser history integration: every panel/layout change pushes a history
+ * entry carrying the serialized layout, and popstate restores it — so
+ * Back/Forward walk the command trail instead of leaving the app.
  */
 
 export type LayoutPreset = 1 | 2 | 4;
@@ -50,6 +54,27 @@ interface StoredLayout {
   panels: (StoredDispatch | null)[];
 }
 
+function serialize(state: Pick<ArgusStore, 'layout' | 'focused' | 'panels'>): StoredLayout {
+  return {
+    layout: state.layout,
+    focused: state.focused,
+    panels: state.panels.map((p) =>
+      p ? { fn: p.spec.fn, entities: p.entities, args: p.args } : null,
+    ),
+  };
+}
+
+/** Stored → live state; unknown fns (registry drift) become empty slots. */
+function hydrate(stored: StoredLayout): Pick<ArgusStore, 'layout' | 'focused' | 'panels'> {
+  const panels = Array.from({ length: SLOTS }, (_, i) => {
+    const p = stored.panels[i];
+    if (!p) return null;
+    const spec = findCommand(p.fn);
+    return spec ? { spec, entities: p.entities, args: p.args } : null;
+  });
+  return { layout: stored.layout, focused: Math.min(stored.focused, stored.layout - 1), panels };
+}
+
 function load(): Pick<ArgusStore, 'layout' | 'focused' | 'panels'> {
   const fallback = { layout: 1 as LayoutPreset, focused: 0, panels: Array<Dispatch | null>(SLOTS).fill(null) };
   try {
@@ -57,31 +82,51 @@ function load(): Pick<ArgusStore, 'layout' | 'focused' | 'panels'> {
     if (!raw) return fallback;
     const stored = JSON.parse(raw) as StoredLayout;
     if (![1, 2, 4].includes(stored.layout)) return fallback;
-    const panels = Array.from({ length: SLOTS }, (_, i) => {
-      const p = stored.panels[i];
-      if (!p) return null;
-      const spec = findCommand(p.fn);
-      return spec ? { spec, entities: p.entities, args: p.args } : null;
-    });
-    return { layout: stored.layout, focused: Math.min(stored.focused, stored.layout - 1), panels };
+    return hydrate(stored);
   } catch {
     return fallback;
   }
 }
 
-function persist(state: ArgusStore): void {
-  const stored: StoredLayout = {
-    layout: state.layout,
-    focused: state.focused,
-    panels: state.panels.map((p) =>
-      p ? { fn: p.spec.fn, entities: p.entities, args: p.args } : null,
-    ),
-  };
+function persist(state: Pick<ArgusStore, 'layout' | 'focused' | 'panels'>): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize(state)));
   } catch {
     /* storage full/blocked: layout just won't survive reload */
   }
+}
+
+/* ---- browser history ---- */
+
+let restoringFromHistory = false;
+
+/** Push a history entry for a navigation (panel/layout change), deduped. */
+function pushHistory(state: Pick<ArgusStore, 'layout' | 'focused' | 'panels'>): void {
+  if (restoringFromHistory) return;
+  const snapshot = serialize(state);
+  if (JSON.stringify(window.history.state) === JSON.stringify(snapshot)) return;
+  window.history.pushState(snapshot, '');
+}
+
+let historyInitialized = false;
+
+/**
+ * Called once from the Shell: seeds the current entry with the boot state
+ * and restores terminal state when the user navigates Back/Forward.
+ */
+export function initHistory(): void {
+  if (historyInitialized) return;
+  historyInitialized = true;
+  window.history.replaceState(serialize(useArgusStore.getState()), '');
+  window.addEventListener('popstate', (e: PopStateEvent) => {
+    const stored = e.state as StoredLayout | null;
+    if (!stored || !Array.isArray(stored.panels)) return;
+    restoringFromHistory = true;
+    const hydrated = hydrate(stored);
+    useArgusStore.setState(hydrated);
+    persist(hydrated);
+    restoringFromHistory = false;
+  });
 }
 
 export const useArgusStore = create<ArgusStore>((set, get) => ({
@@ -107,16 +152,19 @@ export const useArgusStore = create<ArgusStore>((set, get) => ({
       const bare: Dispatch = { spec: d.spec, entities: [], args: {} };
       set((s) => ({ panels: s.panels.map((p, i) => (i === s.focused ? bare : p)) }));
       persist(get());
+      pushHistory(get());
       return;
     }
     set((s) => ({ panels: s.panels.map((p, i) => (i === s.focused ? d : p)) }));
     persist(get());
+    pushHistory(get());
   },
 
   setLayout: (layout) =>
     set((s) => {
       const next = { ...s, layout, focused: Math.min(s.focused, layout - 1) };
-      persist(next as ArgusStore);
+      persist(next);
+      pushHistory(next);
       return { layout, focused: next.focused };
     }),
 
@@ -124,7 +172,7 @@ export const useArgusStore = create<ArgusStore>((set, get) => ({
     set((s) => {
       if (i < 0 || i >= s.layout) return {};
       const next = { ...s, focused: i };
-      persist(next as ArgusStore);
+      persist(next); // focus is not a navigation: persisted, but no history entry
       return { focused: i };
     }),
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { connectSse } from '../api/sse';
 import type { Dispatch } from '../command/parser';
-import { useArgusStore } from '../store/store';
+import { initHistory, useArgusStore } from '../store/store';
 import { Arena } from '../panels/Arena';
 import { Bench } from '../panels/Bench';
 import { Des } from '../panels/Des';
@@ -79,6 +79,7 @@ export function Shell() {
 
   useEffect(() => {
     connectSse();
+    initHistory();
   }, []);
 
   /* ALT+1..4 focuses panel N. (F-keys stay with the browser: F1 help, F5
